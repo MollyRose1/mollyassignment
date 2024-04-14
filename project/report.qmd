@@ -1,0 +1,220 @@
+---
+title: "An international call to action: Children Need Clean Water"
+subtitle: "A study into the effects of unclean water for lower income economies "
+author: "MollyRose Mac Dermott"
+date: "2024-04-14"
+format:
+  html:
+    theme: journal
+    font_color: "#333333"
+    title_color: "pink"
+    backgroundcolor: "#ffe9ec"
+    max-width: '1500'
+    toc: true
+execute: 
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#l label: setup
+#l include: false
+
+# libraries
+library(tidyverse)
+library(plotly)
+library(dplyr)
+library(maps)
+library(patchwork)
+
+#creating files
+unicef_indicator_2 <- read_csv("unicef_indicator_2.csv")
+unicef_metadata <- read_csv("unicef_metadata.csv")
+
+#joining indicator data with metadata
+data_join <- full_join(unicef_indicator_2, unicef_metadata, by = join_by(time_period == year))
+relationship = "many-to-many"
+
+data_year2018 <- full_join(unicef_indicator_2, unicef_metadata, by = join_by(time_period == year)) %>%
+  filter(time_period == 2018)
+relationship = "many-to-many"
+```
+
+```{r}
+#Renaming Columns for visualisation 3
+data_year2018 <- data_year2018 %>%
+  rename("GDPperCap" = "GDP per capita (constant 2015 US$)")
+
+data_year2018 <- data_year2018 %>%
+  rename("LifeExp" = "Life expectancy at birth, total (years)")
+
+data_year2018 <- data_year2018 %>%
+  rename("Population" = "Population, total")
+
+```
+
+## The Problem 
+### Diarrhoea remains a leading cause of death for children under 5. 
+Extreme childhood diarrhoea, which medical treatment and advice must be sought, is a result of malnutrition. *Malnutrition comes from **unclean water* *used drinking and sanitation*. 
+
+### Who does this affect? 
+While diarrhoea is prevelant in children around the world, our observation data was based on the % of children ***under 5*** who had to **seek medical treatment or advice**. This primarily only consisted of data from these **lower & lower middle income economies**.
+
+```{r}
+
+map_world <- map_data("world")
+
+# Filter data for a specific year
+selected_year <- 2000
+ObservationData_year <- unicef_indicator_2 %>%
+  filter(time_period == selected_year)
+
+# Join with world map data
+map_data_year <- full_join(ObservationData_year, map_world, by = c("country" = "region"))
+
+# Plot map
+ggplot(map_data_year, aes(x = long, y = lat, group = group, fill = obs_value)) +
+  geom_polygon() +
+  scale_fill_gradient(low = "pink", high = "purple", na.value = "grey", name = "% of children") +
+  labs(title = paste("% of children who sought medical help for diarrhoea in", selected_year),
+       subtitle = "This map highlights some of the worst affected countries in 2000",
+       x = NULL, y = NULL) +  # Remove axis labels
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, color = "black", face = "bold"),
+        plot.subtitle = element_text(size = 10, hjust = 0.5, color = "black"),
+        panel.background = element_rect(fill = "white"),
+        panel.grid = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom")
+```
+
+```{r}
+
+map_world2 <- map_data("world")
+
+# Filter data for a specific year
+selected_year <- 2018
+ObservationData_year2018 <- unicef_indicator_2 %>%
+  filter(time_period == selected_year)
+
+# Join with map data
+map_data_year2 <- full_join(ObservationData_year2018, map_world2, by = c("country" = "region"))
+
+# Create ggplot
+ggplot(map_data_year2, aes(x = long, y = lat, group = group, fill = obs_value)) +
+  geom_polygon() +
+  scale_fill_gradient(low = "#FFA07A", high = "#D8BFD8", na.value = "grey", name = "% of children") +
+  labs(title = paste("% of children who sought medical help for diarrhoea in", selected_year), subtitle = "This map highlights some of the worst affected countries in 2018", x = NULL, y = NULL) +  # Remove axis labels
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, color = "black", face = "bold"),
+        panel.background = element_rect(fill = "white"),
+        panel.grid = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom")
+```
+
+As you can see from this *comparison map* of 2018, while the problem has **improved** since 2000, it is still ***prevalent***. This is an important issue which must be addressed. This requires the *attention* and *resources* of many parties around the world.
+
+### What problem are we trying to solve?
+Approximately **1/10th** of *global disease* such as **diarrhoea** could be prevented by improving ***water supply, sanitation and overall managing water resources*** better. (e.g., access to safe drinking water).
+
+```{r}
+#| fig-cap: "This visualisation shows the correlation between the GDP per capita of the countries affected and life expectancy at birth."
+
+data_year2018_sexTotal <- data_year2018 %>%
+  filter(sex == "Total")
+
+ggplot(data_year2018_sexTotal) +
+  aes(GDPperCap, LifeExp, colour = country.x, size = Population) +
+  geom_point(alpha = 0.2) +
+  scale_x_continuous(limits = c(0, 15000)) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, color = "black", face = "bold"),
+        axis.title = element_text(size = 10, family = "Arial", color = "black"),
+        axis.text = element_text(size = 10, family = "Arial", color = "black"),
+        panel.background = element_rect(fill = "white", color = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(colour = "light grey")) +
+  theme(legend.position = "None") +
+  labs(x = "GDP per capita",
+       y = "Life expectancy at birth (years)",
+       title = "Type of Economy Vs Life Expectancy")
+```
+
+This indicates, based on the **GDP per capita**, how likely children are to be subjected to illnesses such as Diarrhoea. The correlation here shows that *as the GDP per capita is ***lower***, the life expectancy is lower*. As the economy improves, the life expectancy at birth also improves. This correlation aligns with the information from the **World Health Organisation** which say that *higher income economies have better access to resources such as clean water*."
+
+```{r}
+#| fig-cap: "This visualisation shows us, on average, the worst affected countries with life threatening childhood diarrhoea. The observation value is % of total children under 5 who had to seek medical help/treatment for diarrhoea."
+
+recent_data <- data_year2018_sexTotal %>%
+  filter(time_period >= 2002 & time_period <= 2021)
+
+average_obs <- recent_data %>%
+  group_by(country.x) %>%
+  summarize(avg_obs_value = mean(obs_value, na.rm = TRUE))
+
+# Select top 10 countries with the highest average obs_value
+top_10_countries <- average_obs %>%
+  top_n(10, avg_obs_value)
+
+# Create bar chart
+ggplot(top_10_countries, aes(x = reorder(country.x, -avg_obs_value), y = avg_obs_value)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(x = "",
+       y = "Average % of children who sought medical treatment for diarrhoea",
+       title = "Top 10 countries affected by threatening childhood diarrhoea (Last 20 Years)") +
+  theme_minimal()+
+  theme(plot.title = element_text(size = 14, hjust = 0.5, color = "black", face = "bold"))
+```
+
+As we can see from our data, *majority of the cases of diarrhoea occurred in economies where* ***GDP per capita*** was approx ***$4,000*** or **below** - according to world bank, these are classified as low & lowermiddle income economies. This aligns with research and information published by the World Health Organisation (WHO) and Unicef which indicates the struggles of **low income economies** in **accessing safe water** for drinking and sanitation.
+
+This shows that *poorer economies are experiencing the majority of extreme cases of diarrhoea which require medical treatment*.
+
+
+While the situation of access to clean water has improved over the years for alot of countries, it is still a problem in many lower income economies and therefore they are still reporting high % of children under 5 who sought medical treatment for diarrhoea. 
+
+```{r}
+ObservationData_countryMali <- unicef_indicator_2 %>%
+  filter(country == "Mali")
+
+Timeseries_1 <- ObservationData_countryMali %>%
+  ggplot() +
+  aes(time_period, obs_value, group = sex, colour = sex) +  
+  geom_line(size = 1) +  # Increase line width
+  geom_point(size = 3) +  # Increase marker size
+  labs(title = "How Mali has been affected by childhood diarrhoea over the years",
+       x = "Year",
+       y = "% of children",
+       colour = "Sex") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, hjust = 0.5, color = "black", face = "bold"),
+        axis.title = element_text(size = 12, color = "black"),
+        axis.text = element_text(size = 10, color = "black"),
+        panel.background = element_rect(fill = "white"),  # Add background color
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "right",  # Adjust legend position
+        legend.text = element_text(size = 10)) + # Adjust legend text size
+ 
+  scale_color_manual(values = c("#D8BFD8", "#FFA07A", "grey"),
+                     labels = c("Female", "Male", "Total")) +
+  scale_shape_manual(values = c(16, 17)) 
+
+ggplotly(Timeseries_1)
+p <- ggplotly(Timeseries_1)
+p <- layout(p, tooltip = "none")
+```
+
+
+In the line chart above, we look at the specific case of the country **Mali** over the years. Despite economic growth and the passing of time, Mali remains *one of the poorest countries in the world*. This can be seen in the visualisation as they have had ***increased*** cases of threatening childhood diarrhoea from 2000 to 2018. This is incredibly dangerous and affects their **standard of living and care** for their **children**. This will also have an effect on life expectancy at birth.
+
+### Breaking the Cycle: What conclusion I have drawn + recommendations
+
+These visualisations present a *distressing reality* that the ***children in low and lower middle income economies are struggling*** with diarrhoea and will likely be forced to seek medical treatment for this. There is an **urgent need** for intervention to improve resources, especially ***access to clean water***, in order to try improve the *nutrition* and *health* of these children in these countries.
+
+From these visualisations we see the correlation between GDP per capita and cases of diarrhoea, similarly with life expectancy. This indicates the **GDP per capita** ***struggles*** *to keep pace with demand for improved infrastructure, sanitation and healthcare as the popoulation increases.* **1.4 million** *children die each year from* **preventable** *diarrhoea diseases*. By providing *access to safe drinking water* and *clean water for sanitation*, these deaths would be radically reduced or even avoided.
